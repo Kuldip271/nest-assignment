@@ -6,13 +6,14 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { TasksModule } from './tasks/tasks.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [UsersModule,GraphQLModule.forRoot<ApolloDriverConfig>({
     driver: ApolloDriver,
     autoSchemaFile: join(process.cwd(),'src/schema.gql'),
     sortSchema:true
-  }), TasksModule],
+  }), TasksModule,ConfigModule.forRoot()],
   controllers: [AppController],
   providers: [AppService],
 })

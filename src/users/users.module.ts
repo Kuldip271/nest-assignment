@@ -10,7 +10,7 @@ import { env } from 'process';
 
 @Module({
   imports:[PassportModule,TasksModule,JwtModule.register({
-    secret:process.env.Jwt_Secret,
+    secret:'helloworld',
     signOptions: { expiresIn: '6000s' }
   })],
   providers: [UsersResolver, UsersService,PrismaService,JwtStrategy]

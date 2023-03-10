@@ -28,7 +28,7 @@ export class UsersResolver {
   @UseGuards(JwtAuthGuard)
   @Mutation(() => ResponseTask)
   createTask(@Args('createTaskInput') createTaskInput: CreateTaskInput,@Context() context) {
-    
+    console.log({context})
     return this.taskService.create(createTaskInput,context?.req?.user?.id);
   }
 
@@ -63,10 +63,6 @@ export class UsersResolver {
   findOneTask(@Args('id', { type: () => Int }) id: number) {
     return this.taskService.findOne(id);
   }
-
-
-
-  
 
   
 }
