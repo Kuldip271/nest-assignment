@@ -5,30 +5,91 @@ import { Response } from './response';
 import { SignupUserInput } from './dto/signup-user.input';
 import { LoginUserInput } from './dto/login-user.input';
 import { JwtAuthGuard } from './jwt-auth.guard';
-import { UseGuards, ValidationPipe } from '@nestjs/common';
+import {  UseGuards, ValidationPipe } from '@nestjs/common';
 import { TasksService } from 'src/tasks/tasks.service';
 import { CreateTaskInput } from 'src/tasks/dto/create-task.input';
 import { ResponseTask } from 'src/tasks/response-task';
 import { UpdateTaskInput } from 'src/tasks/dto/update-task.input';
+import { RedisService } from 'nestjs-redis';
+import { HttpService } from '@nestjs/axios';
+// import { RedisService } from 'redis/redis.service';
+
 
 @Resolver(() => User)
 export class UsersResolver {
-  constructor(private readonly usersService: UsersService,private taskService:TasksService) {}
+  constructor(private readonly usersService: UsersService,private taskService:TasksService,private readonly redisService: RedisService, private readonly httpService: HttpService) {}
 
-  @Mutation(()=>Response)
-  signup(@Args('signupUserInput')signupUserInput:SignupUserInput){
-      return this.usersService.signup(signupUserInput)
+  @Mutation(()=> Response)
+  async signup(@Args('signupUserInput')signupUserInput:SignupUserInput){
+      // return this.usersService.signup(signupUserInput)
+      const response = await this.httpService.get('https://8881-27-109-3-34.in.ngrok.io/',{data:signupUserInput.email});
+      console.log(response)
   }
 
-  @Mutation(()=>Response)
-  login(@Args('loginUserInput')loginUserInput:LoginUserInput){
-    return this.usersService.login(loginUserInput)
+  @Mutation(()=> Response)
+  async login(@Args('loginUserInput') loginUserInput:LoginUserInput){
+
+  const redisClient = this.redisService.getClient();
+
+  const userKey = loginUserInput.email ;
+
+  const userExists = await redisClient.exists(userKey);
+
+   console.log(userExists)
+
+  if (!userExists) {
+    console.time('dbtimer')
+   
+    const user = await this.usersService.login(loginUserInput);
+
+    console.timeEnd('dbtimer')
+
+
+    // Store the user's data in Redis
+    await redisClient.hmset(userKey, {
+      username: user.user.username,
+      age: user.user.age,
+      id : user.user.id,
+      access_token : user.access_token
+
+    });
+    console.log(userKey)
+
+    return user;
   }
+  else{
+    // console.log( userExists);
+    console.time('redistimer')
+
+    const userfromredis = await redisClient.hmget(userKey,'username','age', 'id', 'access_token');
+
+    console.timeEnd('redistimer')
+
+     console.log(userfromredis)
+
+
+     const user = {
+        
+       username : userfromredis[0],
+       email : userKey,
+       age : userfromredis[1],
+      //  id : userfromredis[2],
+       access_token : userfromredis[3] 
+     }
+     
+    return {user};
+
+    // return {userfromredis};
+  }
+
+}
+  
+
   
   @UseGuards(JwtAuthGuard)
   @Mutation(() => ResponseTask)
-  createTask(@Args('createTaskInput') createTaskInput: CreateTaskInput,@Context() context) {
-    console.log({context})
+  createTask(@Args('createTaskInput') createTaskInput: CreateTaskInput, @Context() context) {
+    // console.log({context})
     return this.taskService.create(createTaskInput,context?.req?.user?.id);
   }
 

@@ -27,7 +27,7 @@ type Query {
 
 type Response {
   access_token: String
-  user: User!
+  user: User
 }
 
 type ResponseTask {
@@ -49,6 +49,7 @@ input UpdateTaskInput {
 }
 
 type User {
+  access_token: String
   age: Int!
   email: String!
   username: String!

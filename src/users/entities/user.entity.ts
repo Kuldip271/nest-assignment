@@ -10,4 +10,7 @@ export class User {
 
     @Field(()=>Int)
     age:number
+
+    @Field({nullable:true})
+    access_token?: string
 }

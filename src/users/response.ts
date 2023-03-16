@@ -7,9 +7,13 @@ export class Response{
     @Field({nullable: true})
     access_token?:string
 
-    @Field(()=>User)
+    @Field(()=>User, {nullable:true})
     user:User
 
+
+
+    // @Field(()=> [String],{nullable : true})
+    // userfromredis : [string] 
    
 
 }
